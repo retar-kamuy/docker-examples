@@ -1,21 +1,23 @@
-# RISC-V GNU Compiler Toolchain
+# Docker Examples
 
-## ルートレスコンテナの利用方法
-[RHEL Product Documentation 1.6. ルートレスコンテナーの設定](https://access.redhat.com/documentation/ja-jp/red_hat_enterprise_linux/8/html/building_running_and_managing_containers/proc_setting-up-rootless-containers_assembly_starting-with-containers)
-に記載の通りユーザ追加すると自動的に`/etc/subuid`へユーザIDが追加される。
+* Install of Verilator in CentOS7.
+* This is for checking whether the Verilator binary can be executed in an offline environment.
+* too old to use of installing yun's gcc. Then, Using tarball GCC.
 
-## 使い方
+* To run Verilator needed packages [here](https://verilator.org/guide/latest/install.html#install-prerequisites)
+```sh
+yum install -y help2man perl python3 make gcc libatomic
 ```
-export PATH=/opt/riscv/bin:$PATH
-which riscv32-unknown-elf-objcopy
+# Caution
+* When setting ***LD_LIBRARY_PATH*** variable, Must be attached ***export***.
+```sh
+export LD_LIBRARY_PATH=/usr/local/gcc/lib:/usr/local/gcc/lib64:$LD_LIBRARY_PATH
 ```
 
-## Dockerfile
-* texinfoのインストールにはPowerToolsリポジトリの有効化が必要
+# Reference
+* Dockerfile Multistage Build
+[https://matsuand.github.io/docs.docker.jp.onthefly/develop/develop-images/multistage-build/]()
 
-## RHEL8の場合
-以下パッケージをインストール後にビルドを実施
-```
-subscription-manager repos --enable codeready-builder-for-rhel-8-x86_64-rpms
-dnf -y install texinfo diffutils expat-devel gmp-devel
-```
+* Gcc download mirror
+[https://www.gnu.org/prep/ftp.html]()
+
