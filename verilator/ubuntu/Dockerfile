@@ -1,20 +1,39 @@
-FROM c7-gcc:latest
-ARG VER="5.006"
-ARG PREFIX="/usr/local/verilator"
+FROM ubuntu:22.04
+ARG TAG="5.014"
+ARG PREFIX="/opt/verilator"
+ENV CC clang
+ENV CXX clang++
+ENV SYSTEMC_HOME /opt/systemc-2.3.3
+ENV SYSTEMC_INCLUDE $SYSTEMC_HOME/include
 WORKDIR /root/
-COPY gcc.tar.gz ./
-ENV PATH /usr/local/gcc/bin:$PATH
-ENV LD_LIBRARY_PATH /usr/local/gcc/lib:/usr/local/gcc/lib64:$LD_LIBRARY_PATH
-RUN tar -C /usr/local -zxvf gcc.tar.gz --remove-file \
-    && yum install -y python3 flex bison help2man make autoconf \
-    && curl -OL https://github.com/verilator/verilator/archive/refs/tags/v${VER}.tar.gz \
-    && tar -zxvf v${VER}.tar.gz --remove-file \
-    && cd verilator-${VER} \
-    && autoconf \
-    && ./configure --prefix=${PREFIX} \
-    && make -j `nproc` \
-    && make install \
-    && tar -C $(dirname ${PREFIX}) -zxvf $(basename ${PREFIX}).tar.gz $(basename ${PREFIX}) \
-    && cd .. \
-    && rm -rf verilator-${VER}
-CMD ["/usr/sbin/init"]
+RUN wget -qO /usr/local/bin/ninja.gz https://github.com/ninja-build/ninja/releases/latest/download/ninja-linux.zip \
+    && gunzip /usr/local/bin/ninja.gz \
+    && chmod a+x /usr/local/bin/ninja \
+    && apt-get -y install git help2man perl python3 make autoconf g++ flex bison ccache \
+    && apt-get -y install libgoogle-perftools-dev numactl perl-doc \
+    && apt-get -y install libfl2 \
+    && apt-get -y install libfl-dev \
+    && apt-get -y install zlibc zlib1g zlib1g-dev \
+    && apt-get -y install cmake \
+    && git clone https://github.com/verilator/verilator \
+    && unsetenv VERILATOR_ROOT \
+    && unset VERILATOR_ROOT \
+    && cd verilator \
+    && git checkout v$TAG \
+    && mkdir build \
+    && cd build \
+    && cmake -G Ninja .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DCMAKE_INSTALL_PREFIX=${PREFIX} \
+        -DCMAKE_C_COMPILER=${CC} \
+        -DCMAKE_CXX_COMPILER=${CXX} \
+        -DBISON_EXECUTABLE=/usr/bin/bison \
+        -DFLEX_EXECUTABLE=/usr/bin/flex \
+        -DCMAKE_EXE_LINKER_FLAGS="-lpthread" \
+    && ninja \
+    && cmake --install . --prefix ${PREFIX} \
+    && chmod -R o+rx ${PREFIX}
+ENV VERILATOR_ROOT ${PREFIX}
+ENV PATH ${VERILATOR_ROOT}/bin:$PATH
+USER nobody
+WORKDIR /tmp
